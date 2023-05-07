@@ -6,13 +6,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/akamensky/argparse"
 	"github.com/gliderlabs/ssh"
+	"github.com/akamensky/argparse"
 )
 
 type Arguments struct {
 	port string
 	iface string
+	userName string
+	passWord string
 }
 
 func get_args() Arguments {
@@ -25,12 +27,24 @@ func get_args() Arguments {
 			Default: "22",
 		})
 
-	iface := parser.String("i", "Interface to listen on",
+	iface := parser.String("i", "interface",
 		&argparse.Options{
 			Required: false,
 			Help: "The interface to run the SSH server on",
 			Default: "0.0.0.0",
 		})
+
+	userName := parser.String("U", "username",
+	&argparse.Options{
+		Required: true,
+		Help: "The username for authentication to the SSH server",
+	})
+
+	passWord := parser.String("P", "password",
+	&argparse.Options{
+		Required: true,
+		Help: "The password for authentication to the SSH server",
+	})
 
 	argErr := parser.Parse(os.Args)
 
@@ -40,6 +54,8 @@ func get_args() Arguments {
 	return Arguments{
 		port: *port,
 		iface: *iface,
+		userName: *userName,
+		passWord: *passWord,
 	}
 }
 
@@ -54,7 +70,7 @@ func main() {
 	server := ssh.Server{
 		Addr: fmt.Sprintf("%s:%s", arguments.iface, arguments.port),
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
-			if ctx.User() == "test"	 && password == "test1234" {
+			if ctx.User() == arguments.userName	&& password == arguments.passWord {
 				log.Printf("user %s connected from %s", ctx.User(), ctx.RemoteAddr())
 				return true
 			}
